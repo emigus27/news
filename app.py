@@ -34,13 +34,16 @@ sentiment_df = (
 )
 sentiment_df["Sentiment"] = sentiment_df["Sentiment"].str.replace("_count", "").str.capitalize()
 
+# define colors: Positive -> green, Neutral -> yellow, Negative -> red
+color_map = {"Positive": "#2ca02c", "Neutral": "#f1c40f", "Negative": "#d62728"}
+
 # pie chart showing overall sentiment
 fig_pie = px.pie(
     sentiment_df,
     names="Sentiment",
     values="Count",
     title=f"Sentiment Distribution (Last {num_days} Days)",
-    color_discrete_sequence=px.colors.qualitative.Pastel
+    color_discrete_map=color_map
 )
 
 # prepare stacked bar data by day
@@ -59,7 +62,7 @@ fig_bar = px.bar(
     y="Count",
     color="Sentiment",
     title=f"Articles per Day (Last {num_days} Days)",
-    color_discrete_sequence=px.colors.qualitative.Pastel,
+    color_discrete_map=color_map,
     barmode="stack",
     labels={"publishedAt": "Publication Date", "Count": "Number of Articles"}
 )
