@@ -2,26 +2,30 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.set_page_config(page_title="News Summary", page_icon="📰", layout="wide")
+st.set_page_config(
+    page_title="📰 English-Language News Mentioning Sweden",
+    page_icon="📰",
+    layout="wide"
+)
 
 @st.cache_data
 def load_data():
     return pd.read_csv("data/news_summary.csv")
 
-# --- Load and prepare data ---
+# load the data and parse dates
 df = load_data()
 df["publishedAt"] = pd.to_datetime(df["publishedAt"])
 
-# --- Streamlit UI ---
-st.title("📰 News Summary Dashboard")
+# page title and controls
+st.title("📰 English-Language News Mentioning Sweden")
 num_days = st.slider("Select number of days to include", 3, 30, 7)
 
-# --- Filter data by date range ---
+# filter rows to the selected date range
 latest_date = df["publishedAt"].max()
 start_date = latest_date - pd.Timedelta(days=num_days - 1)
 recent_df = df[df["publishedAt"] >= start_date]
 
-# --- Aggregate sentiment counts for pie chart ---
+# sum up sentiment counts for the pie chart
 sentiment_df = (
     recent_df[["positive_count", "negative_count", "neutral_count"]]
     .sum()
@@ -30,7 +34,7 @@ sentiment_df = (
 )
 sentiment_df["Sentiment"] = sentiment_df["Sentiment"].str.replace("_count", "").str.capitalize()
 
-# --- Pie chart: Sentiment distribution ---
+# pie chart showing overall sentiment
 fig_pie = px.pie(
     sentiment_df,
     names="Sentiment",
@@ -39,7 +43,7 @@ fig_pie = px.pie(
     color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
-# --- Prepare data for bar chart ---
+# prepare stacked bar data by day
 melted = recent_df.melt(
     id_vars="publishedAt",
     value_vars=["positive_count", "negative_count", "neutral_count"],
@@ -48,7 +52,7 @@ melted = recent_df.melt(
 )
 melted["Sentiment"] = melted["Sentiment"].str.replace("_count", "").str.capitalize()
 
-# --- Bar chart: Articles per day ---
+# stacked bar chart of articles per day
 fig_bar = px.bar(
     melted,
     x="publishedAt",
@@ -60,15 +64,16 @@ fig_bar = px.bar(
     labels={"publishedAt": "Publication Date", "Count": "Number of Articles"}
 )
 
-# --- Layout: side-by-side charts ---
+# show charts side by side
 col1, col2 = st.columns(2)
 with col1:
     st.plotly_chart(fig_pie, use_container_width=True)
 with col2:
     st.plotly_chart(fig_bar, use_container_width=True)
 
-# --- Optional footer / caption ---
+# footer with date range
 st.caption(
-    f"Data collected from [NewsAPI.org](https://newsapi.org) — "
-    f"showing articles published between **{start_date.date()}** and **{latest_date.date()}**."
+    f"Sentiment analysis performed using **TextBlob**. "
+    f"Data collected via **[NewsAPI.org](https://newsapi.org)** — "
+    f"covering articles published between **{start_date.date()}** and **{latest_date.date()}**."
 )
